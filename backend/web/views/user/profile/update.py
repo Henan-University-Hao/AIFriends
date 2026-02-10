@@ -55,7 +55,7 @@ class UpdateProfileVIew(APIView):
             # 如果上传了新头像
             if photo:
                 # 删除旧头像文件（避免磁盘垃圾）
-                remove_old_photo(photo)
+                remove_old_photo(user_profile.photo)
                 # 更新头像字段
                 user_profile.photo = photo
 
