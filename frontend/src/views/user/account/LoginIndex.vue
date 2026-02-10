@@ -58,7 +58,6 @@ async function handleLogin() {
     } catch (err) {
       // 网络错误 / 服务器异常 / 接口报错
       errorMessage.value = '登录失败，请稍后再试'
-      console.error(err)
     }
   }
 }

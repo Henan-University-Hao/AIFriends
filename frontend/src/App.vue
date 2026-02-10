@@ -21,8 +21,8 @@ onMounted(async () => {
   } finally {
     user.setHasPulledUserInfo(true)
 
-    if(route.meta.needLogin && user.isLogin()) { //从云端加载完之后，如果需要登录且未登录就跳转到登录页面
-      await route.replace({
+    if(route.meta.needLogin && !user.isLogin()) { //从云端加载完之后，如果需要登录且未登录就跳转到登录页面
+      await router.replace({
         name: 'user-account-login-index'
       })
     }
