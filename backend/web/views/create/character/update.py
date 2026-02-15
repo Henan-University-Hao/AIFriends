@@ -1,14 +1,14 @@
 from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 
 from web.models.character import Character
 from web.views.utils.photo import remove_old_photo
 
 
 class UpdateCharacterView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
     def post(self,request):
         try:
             character_id = request.data['character_id']
