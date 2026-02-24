@@ -1,7 +1,7 @@
 ﻿<script setup>
 import { useRoute } from 'vue-router'
 import UserInfoField from "@/views/user/space/components/UserInfoField.vue"
-import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue"
+import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue"
 import api from "@/js/http/api.js"
 import Character from "@/components/character/Character.vue";
 
@@ -25,18 +25,19 @@ async function loadMore() {
   if (isLoading.value || !hasCharacters.value) return
 
   isLoading.value = true
+  const requestUserId = route.params.user_id
   let newCharacters = []
 
   try {
     const res = await api.get('api/create/character/get_list/', {
       params: {
         items_count: characters.value.length,
-        user_id: route.params.user_id,
+        user_id: requestUserId,
       }
     })
 
     const data = res.data
-    if (data.result === 'success') {
+    if (data.result === 'success' && requestUserId === route.params.user_id) {
       // 请求成功，更新用户信息和角色列表
       userProfile.value = data.user_profile
       newCharacters = data.characters
@@ -44,6 +45,8 @@ async function loadMore() {
   } catch (err) {
     console.log(err)
   } finally {
+    if (requestUserId !== route.params.user_id) return
+
     isLoading.value = false
 
     if (newCharacters.length === 0) {
@@ -63,8 +66,16 @@ async function loadMore() {
 
 let observer = null
 
-onMounted(async () => {
+async function resetAndLoad() {
+  userProfile.value = null
+  characters.value = []
+  hasCharacters.value = true
+  isLoading.value = false
   await loadMore()
+}
+
+onMounted(async () => {
+  await resetAndLoad()
 
   // 创建一个 IntersectionObserver 实例
   // 用来监听“哨兵元素”（sentinelRef）是否进入可视区域
@@ -91,6 +102,14 @@ onMounted(async () => {
     observer.observe(sentinelRef.value)
   }
 })
+
+watch(
+  () => route.params.user_id,
+  async (newUserId, oldUserId) => {
+    if (newUserId === oldUserId) return
+    await resetAndLoad()
+  }
+)
 
 function removeCharacter(characterId) {
   characters.value = characters.value.filter(c => c.id !== characterId)
