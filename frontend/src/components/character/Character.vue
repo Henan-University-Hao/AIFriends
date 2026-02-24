@@ -11,6 +11,8 @@ const isHover = ref(false)
 const user = useUserStore()
 
 async function handleRemoveCharacter() {
+  if (!window.confirm('确认删除这个角色吗？')) return
+
   try {
     const res = await api.post('/api/create/character/remove/', {
       character_id: props.character.id,
