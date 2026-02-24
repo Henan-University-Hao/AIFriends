@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import UserInfoField from "@/views/user/space/components/UserInfoField.vue"
 import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue"
 import api from "@/js/http/api.js"
+import Character from "@/components/character/Character.vue";
 
 const userProfile = ref(null)        // 用户信息
 const characters = ref([])           // 对应创建的角色
@@ -91,6 +92,11 @@ onMounted(async () => {
   }
 })
 
+function removeCharacter(characterId) {
+  characters.value = characters.value.filter(c => c.id !== characterId)
+}
+
+
 onBeforeUnmount(() => {
   // 组件销毁时断开监听，防止内存泄漏
   observer?.disconnect()
@@ -107,11 +113,17 @@ onBeforeUnmount(() => {
       当最后一行元素不足时会左对齐。
     -->
     <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-9 mt-12 justify-items-center w-full px-9">
-      <!-- 角色卡片渲染区域 -->
+      <Character
+          v-for="character in characters"
+          :key="character.id"
+          :character="character"
+          :canEdit="true"
+          @remove="removeCharacter"
+      />
     </div>
 
     <!-- 哨兵元素 -->
-    <div ref="sentinel-ref" class="h-2 mt-8 w-100 bg-red-600"></div>
+    <div ref="sentinel-ref" class="h-2 mt-8"></div>
 
     <div v-if="isLoading" class="text-gray-500 mt-4">
       加载中...
