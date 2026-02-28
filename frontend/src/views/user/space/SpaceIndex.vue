@@ -43,7 +43,6 @@ async function loadMore() {
       newCharacters = data.characters
     }
   } catch (err) {
-    console.log(err)
   } finally {
     if (requestUserId !== route.params.user_id) return
 

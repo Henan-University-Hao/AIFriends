@@ -29,7 +29,6 @@ onMounted(async () => {
     } else {
     }
   }catch (err) {
-    console.log(err)
   }
 })
 
@@ -79,7 +78,6 @@ async function handleUpdate() {
         errorMessage.value = data.result
       }
     } catch (err) {
-      console.log(err)
       errorMessage.value = '系统异常，请稍后重试';
     }
   }
