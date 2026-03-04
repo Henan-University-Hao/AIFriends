@@ -26,7 +26,7 @@ class GetListFriendView(APIView):
                         'photo':character.photo.url,
                         'background_image':character.background_image.url,
                         'author':{
-                            'id': author.user.id,
+                            'user_id': author.user.id,
                             'username':author.user.username,
                             'photo':author.photo.url,
                         }
