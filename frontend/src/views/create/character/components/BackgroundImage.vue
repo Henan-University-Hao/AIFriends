@@ -38,7 +38,8 @@ async function crop() {
 
   myBackgroundImage.value = await croppie.result({
     type: 'base64',
-    size: 'viewport',
+    format: 'png',
+    size: { width: 900, height: 1500 }, // 3:5，viewport 150:250 同比例
   })
 
   modalRef.value.close()

@@ -39,7 +39,8 @@ async function crop() {
 
   myPhoto.value = await croppie.result({
     type: 'base64',
-    size: 'viewport',
+    format: 'png',
+    size: { width: 900, height: 900 },
   })
 
   modalRef.value.close()
