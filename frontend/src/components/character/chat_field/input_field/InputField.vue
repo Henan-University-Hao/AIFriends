@@ -5,6 +5,7 @@ import MicIcon from "@/components/character/icon/MicIcon.vue";
 import {ref, useTemplateRef} from "vue";
 import streamApi from "@/js/http/streamApi.js";
 const props = defineProps(['friendId'])
+const emit = defineEmits(['pushBackMessage', 'addToLastMessage'])
 const inputRef = useTemplateRef('input-ref')
 const message = ref('')
 let isProcessing = false //是否正在执行（防止重复发消息）
@@ -20,6 +21,11 @@ async function handleSend() {
   if(!content) return // 内容判空
   message.value = ''
 
+  // crypto.randomUUID()：生成符合 UUID v4 标准的唯一标识符，确保每条消息都有独立的 ID
+  //利用role在渲染时对父组件的每条history消息进行区分
+  emit('pushBackMessage', {role: 'user', content: content, id: crypto.randomUUID()})
+  emit('pushBackMessage', {role: 'ai', content: '', id: crypto.randomUUID()})
+
   try{
     await streamApi('/api/friend/message/chat/', {
       body: {
@@ -30,7 +36,7 @@ async function handleSend() {
         if(isDone){
           isProcessing = false
         } else if (data.content) {
-          console.log(data.content)
+          emit('addToLastMessage', data.content)
         }
       },
       onerror(err) {

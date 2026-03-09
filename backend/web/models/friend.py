@@ -18,7 +18,7 @@ class Friend(models.Model):
 class Message(models.Model):
     friend = models.ForeignKey(Friend, on_delete=models.CASCADE)
     user_message = models.TextField(max_length=500) #用户的消息
-    input = models.TextField(max_length=500) #模型的输入
+    input = models.TextField(max_length=10000) #模型的输入
     output = models.TextField(max_length=500) #模型的输出
     #输入和输出消耗tokens
     input_tokens = models.IntegerField(default=0)
