@@ -1,13 +1,13 @@
 import json
 
 from django.http import StreamingHttpResponse
-from langchain_core.messages import HumanMessage, BaseMessageChunk
+from langchain_core.messages import HumanMessage, BaseMessageChunk, SystemMessage, AIMessage
 from rest_framework.renderers import BaseRenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from web.models.friend import Friend, Message
+from web.models.friend import Friend, Message, SystemPrompt
 from web.views.friend.message.chat.graph import ChatGraph
 
 class SSERenderer(BaseRenderer):
@@ -15,6 +15,26 @@ class SSERenderer(BaseRenderer):
     format = 'txt'
     def render(self, data, accepted_media_type=None, renderer_context=None):
         return data
+
+def add_system_prompt(state, friend): #添加提示词
+    messages = state['messages']
+    system_prompts = SystemPrompt.objects.filter(title='回复').order_by('order_number')
+    prompt = ''
+    for system_prompt in system_prompts:
+        prompt += system_prompt.prompt
+    prompt += f'\n【角色性格】\n{friend.character.profile}\n' # 角色的简介描述
+    return {'messages': [SystemMessage(prompt)] + messages}
+
+def add_recent_messages(state, friend): #添加最近的对话
+    messages = state['messages']
+    message_raw = list(Message.objects.filter(friend=friend).order_by('-id'))
+    message_raw.reverse()
+    recent_messages = []
+    for message in message_raw:
+        recent_messages.append(HumanMessage(message.user_message))
+        recent_messages.append(AIMessage(message.output))
+    return {'messages': messages[:1] + recent_messages + messages[-1:],} #对话添加到系统提示词和最后一条用户提问中间
+
 
 class MessageChatView(APIView):
     permission_classes = [IsAuthenticated]
@@ -37,6 +57,8 @@ class MessageChatView(APIView):
         inputs = {
             'messages': [HumanMessage(message)]
         }
+        inputs = add_system_prompt(inputs, friend)
+        inputs = add_recent_messages(inputs, friend)
 
         #模型回复改为流式的回复
         def event_stream():
