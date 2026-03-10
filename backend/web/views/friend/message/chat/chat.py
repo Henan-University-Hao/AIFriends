@@ -9,6 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from web.models.friend import Friend, Message, SystemPrompt
 from web.views.friend.message.chat.graph import ChatGraph
+from web.views.friend.message.memory.update import update_memory
+
 
 class SSERenderer(BaseRenderer):
     media_type = 'text/event-stream'
@@ -23,6 +25,7 @@ def add_system_prompt(state, friend): #添加提示词
     for system_prompt in system_prompts:
         prompt += system_prompt.prompt
     prompt += f'\n【角色性格】\n{friend.character.profile}\n' # 角色的简介描述
+    prompt += f'【长期记忆】{friend.memory}\n' # 对用户的长期记忆
     return {'messages': [SystemMessage(prompt)] + messages}
 
 def add_recent_messages(state, friend): #添加最近的对话
@@ -91,6 +94,9 @@ class MessageChatView(APIView):
                 output_tokens=output_tokens,
                 total_tokens=total_tokens,
             )
+
+            if Message.objects.filter(friend=friend).count() % 1 == 0:
+                update_memory(friend)
 
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream') # 创建流式 HTTP 响应，指定 SSE 标准 MIME 类型
         response['Cache-Control'] = 'no-cache' #禁止浏览器/代理缓存该响应
