@@ -4,21 +4,29 @@ import SendIcon from "@/components/character/icon/SendIcon.vue";
 import MicIcon from "@/components/character/icon/MicIcon.vue";
 import {ref, useTemplateRef} from "vue";
 import streamApi from "@/js/http/streamApi.js";
+import MicroPhone from "@/components/character/chat_field/chat_history/message/MicroPhone.vue";
 const props = defineProps(['friendId'])
 const emit = defineEmits(['pushBackMessage', 'addToLastMessage'])
 const inputRef = useTemplateRef('input-ref')
 const message = ref('')
-let isProcessing = false //是否正在执行（防止重复发消息）
+let processId = 0
+const showMic = ref(false) // 控制麦克风组件的显示（默认不显示）
 function focus() {
   inputRef.value.focus()
 }
 
-async function handleSend() {
-  if (isProcessing) return
-  isProcessing = true
+async function handleSend(event, audio_message) {
 
-  const content = message.value.trim()
-  if(!content) return // 内容判空
+  let content
+  if (audio_message) {
+    content = audio_message.trim()
+  } else {
+    content = message.value.trim()
+  }
+
+
+  const curId = ++ processId
+
   message.value = ''
 
   // crypto.randomUUID()：生成符合 UUID v4 标准的唯一标识符，确保每条消息都有独立的 ID
@@ -33,28 +41,34 @@ async function handleSend() {
         message: content,
       },
       onmessage(data, isDone) {
-        if(isDone){
-          isProcessing = false
-        } else if (data.content) {
+        if(curId !== processId)
+          return
+        if (data.content) {
           emit('addToLastMessage', data.content)
         }
       },
       onerror(err) {
-        isProcessing = false
       },
     })
   }catch(err){
-    isProcessing = false
   }
+}
+function close() {
+  ++ processId
+  showMic.value = false
+}
+function handleStop() {
+  ++ processId
 }
 
 defineExpose({
   focus,
+  close,
 })
 </script>
 
 <template>
-  <form @submit.prevent="handleSend" class="absolute bottom-4 left-2 h-12 w-86 flex items-center">
+  <form v-if="!showMic" @submit.prevent="handleSend" class="absolute bottom-4 left-2 h-12 w-86 flex items-center">
     <input
         ref="input-ref"
         v-model="message"
@@ -65,10 +79,17 @@ defineExpose({
     <div @click="handleSend" class="absolute right-2 w-8 h-8 flex justify-center items-center cursor-pointer">
       <SendIcon />
     </div>
-    <div class="absolute right-10 w-8 h-8 flex justify-center items-center cursor-pointer">
-      <MicIcon />
+    <div @click="showMic = true" class="absolute right-10 w-8 h-8 flex justify-center items-center cursor-pointer">
+      <MicIcon/>
     </div>
   </form>
+  <div v-else>
+    <MicroPhone
+        @close="showMic = false"
+        @send="handleSend"
+        @stop="handleStop"
+    />
+  </div>
 </template>
 
 <style scoped>
