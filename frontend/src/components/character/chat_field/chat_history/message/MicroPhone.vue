@@ -55,8 +55,9 @@ const sendToBackend = async (arrayBuffer) => {
   formData.append("audio", blob, 'voice.pcm')
 
   try {
-    const res = await api.post('', formData)
+    const res = await api.post('/api/friend/message/asr/asr/', formData)
     const data = res.data
+    console.log(data)
     if (data.result === 'success') {
       emit('send', null, data.text) // 事件，第一个参数，第二个参数
     }
