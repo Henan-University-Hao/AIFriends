@@ -6,3 +6,5 @@ media/
 staticfiles/
 static/
 *.env
+backend/web/documents/
+.vscode/
