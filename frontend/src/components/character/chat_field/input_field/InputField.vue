@@ -1,22 +1,24 @@
 <script setup>
-
 import SendIcon from "@/components/character/icon/SendIcon.vue";
 import MicIcon from "@/components/character/icon/MicIcon.vue";
-import {ref, useTemplateRef, onUnmounted} from "vue";
+import { ref, useTemplateRef, onUnmounted } from "vue";
 import streamApi from "@/js/http/streamApi.js";
 import MicroPhone from "@/components/character/chat_field/chat_history/message/MicroPhone.vue";
+import { getErrorMessage } from "@/js/http/api.js";
+
 const props = defineProps(['friendId'])
 const emit = defineEmits(['pushBackMessage', 'addToLastMessage'])
 const inputRef = useTemplateRef('input-ref')
 const message = ref('')
+const errorMessage = ref('')
+const showMic = ref(false)
 let processId = 0
-const showMic = ref(false) // 控制麦克风组件的显示（默认不显示）
 
 let mediaSource = null;
 let sourceBuffer = null;
-let audioPlayer = new Audio(); // 全局播放器实例
-let audioQueue = [];           // 待写入 Buffer 的二进制队列
-let isUpdating = false;        // Buffer 是否正在写入
+let audioPlayer = new Audio();
+let audioQueue = [];
+let isUpdating = false;
 
 const initAudioStream = () => {
     audioPlayer.pause();
@@ -38,7 +40,7 @@ const initAudioStream = () => {
         }
     });
 
-    audioPlayer.play().catch(e => console.error("等待用户交互以播放音频"));
+    audioPlayer.play().catch(() => console.error("等待用户交互以播放音频"));
 };
 
 const processQueue = () => {
@@ -77,7 +79,7 @@ const stopAudio = () => {
     }
 };
 
-const handleAudioChunk = (base64Data) => {  // 将语音片段添加到播放器队列中
+const handleAudioChunk = (base64Data) => {
     try {
         const binaryString = atob(base64Data);
         const len = binaryString.length;
@@ -102,35 +104,32 @@ function focus() {
   inputRef.value.focus()
 }
 
-async function handleSend(event, audio_message) {
+async function handleSend(event, audioMessage) {
+  errorMessage.value = ''
 
-  let content
-  if (audio_message) {
-    content = audio_message.trim()
-  } else {
-    content = message.value.trim()
+  const content = audioMessage ? audioMessage.trim() : message.value.trim()
+  if (!content) {
+    return
   }
 
-  initAudioStream() // 初始化音频播放器
+  initAudioStream()
 
-  const curId = ++ processId
-
+  const curId = ++processId
   message.value = ''
 
-  // crypto.randomUUID()：生成符合 UUID v4 标准的唯一标识符，确保每条消息都有独立的 ID
-  //利用role在渲染时对父组件的每条history消息进行区分
-  emit('pushBackMessage', {role: 'user', content: content, id: crypto.randomUUID()})
-  emit('pushBackMessage', {role: 'ai', content: '', id: crypto.randomUUID()})
+  emit('pushBackMessage', { role: 'user', content, id: crypto.randomUUID() })
+  emit('pushBackMessage', { role: 'ai', content: '', id: crypto.randomUUID() })
 
-  try{
+  try {
     await streamApi('/api/friend/message/chat/', {
       body: {
         friend_id: props.friendId,
         message: content,
       },
-      onmessage(data, isDone) {
-        if(curId !== processId)
+      onmessage(data) {
+        if (curId !== processId) {
           return
+        }
         if (data.content) {
           emit('addToLastMessage', data.content)
         }
@@ -139,18 +138,22 @@ async function handleSend(event, audio_message) {
         }
       },
       onerror(err) {
+        errorMessage.value = getErrorMessage(err, '操作过快了，请稍后再试')
       },
     })
-  }catch(err){
+  } catch (err) {
+    errorMessage.value = getErrorMessage(err, '操作过快了，请稍后再试')
   }
 }
+
 function close() {
-  ++ processId
+  ++processId
   showMic.value = false
   stopAudio()
 }
+
 function handleStop() {
-  ++ processId
+  ++processId
   stopAudio()
 }
 
@@ -161,6 +164,12 @@ defineExpose({
 </script>
 
 <template>
+  <p
+      v-if="errorMessage"
+      class="absolute bottom-18 left-2 w-86 rounded-xl bg-black/45 px-3 py-2 text-xs text-red-300 backdrop-blur-sm"
+  >
+    {{ errorMessage }}
+  </p>
   <form v-if="!showMic" @submit.prevent="handleSend" class="absolute bottom-4 left-2 h-12 w-86 flex items-center">
     <input
         ref="input-ref"

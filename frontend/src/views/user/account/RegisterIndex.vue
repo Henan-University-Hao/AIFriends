@@ -1,10 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import { useUserStore } from "@/stores/user.js";
-// 引入路由，用来做登录成功后的页面跳转
 import { useRouter } from "vue-router";
-import api from "@/js/http/api.js";
-import {c} from "vue-router/dist/devtools-EWN81iOl.mjs";
+import api, { getErrorMessage } from "@/js/http/api.js";
 
 const username = ref('')
 const password = ref('')
@@ -16,32 +14,33 @@ const router = useRouter()
 
 async function handleRegister() {
   errorMessage.value = ''
-  if(!username.value.trim() || !password.value.trim()) {
+  successMessage.value = ''
+
+  if (!username.value.trim() || !password.value.trim()) {
     errorMessage.value = '用户名和密码不能为空'
-  } else if(password.value.trim() !== password_confirm.value.trim()) {
+  } else if (password.value.trim() !== password_confirm.value.trim()) {
     errorMessage.value = '两次密码输入不一致'
   } else {
     try {
       const res = await api.post('api/user/account/register/', {
-        username : username.value,
-        password : password.value
+        username: username.value,
+        password: password.value
       })
       const data = res.data
-      if(data.result === 'success') {
-        successMessage.value = '注册成功!正在登录中....'
+      if (data.result === 'success') {
+        successMessage.value = '注册成功，正在登录中...'
         setTimeout(() => {
-          // 存储access和信息
           user.setAccessToken(data.access)
           user.setUserInfo(data)
-          //跳转首页
           router.push({
             name:'homepage-index',
           })
         }, 1000)
-      }else {
+      } else {
         errorMessage.value = data.result
       }
-    }catch (err) {
+    } catch (err) {
+      errorMessage.value = getErrorMessage(err, '注册失败，请稍后再试')
     }
   }
 }

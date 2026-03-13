@@ -9,6 +9,7 @@ import websockets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 
 class ASRView(APIView):
@@ -25,6 +26,8 @@ class ASRView(APIView):
 
     # 只有登录用户才能访问这个接口
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'asr'
 
     def post(self, request):
         """

@@ -1,12 +1,15 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 from web.models.friend import Friend
 
 
 class RemoveFriendView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'write'
     def post(self, request):
         try:
             friend_id = int(request.data['friend_id'])

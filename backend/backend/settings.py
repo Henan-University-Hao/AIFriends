@@ -152,6 +152,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'EXCEPTION_HANDLER': 'web.exceptions.custom_exception_handler',
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/minute',
+        'register': '3/minute',
+        'chat': '10/minute',
+        'asr': '10/minute',
+        'write': '20/minute',
+    },
 }
 
 # SimpleJWT配置

@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 from web.models.character import Character
 from web.models.friend import Friend
@@ -9,6 +10,8 @@ from web.models.user import UserProfile
 
 class GetOrCreateFriendView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'write'
     def post(self, request):
         try:
             character_id = request.data['character_id']

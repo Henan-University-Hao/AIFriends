@@ -1,12 +1,15 @@
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from web.models.user import UserProfile
 
 
 class LoginView(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
     # 登录接口：接收用户名/密码，认证通过后签发 JWT 并返回用户信息。
     def post(self, request, *args, **kwargs):
         # 使用 try/except 防止认证流程中的异常导致接口崩溃。

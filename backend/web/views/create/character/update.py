@@ -2,6 +2,7 @@ from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 from web.models.character import Character
 from web.views.utils.photo import remove_old_photo
@@ -9,6 +10,8 @@ from web.views.utils.photo import remove_old_photo
 
 class UpdateCharacterView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'write'
     def post(self,request):
         try:
             character_id = request.data['character_id']

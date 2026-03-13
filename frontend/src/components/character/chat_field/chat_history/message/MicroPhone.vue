@@ -1,12 +1,12 @@
 <script setup>
-
-import {onBeforeUnmount, onMounted, ref} from "vue";
-import {MicVAD} from "@ricky0123/vad-web";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { MicVAD } from "@ricky0123/vad-web";
 import KeyboardIcon from "@/components/character/icon/KeyboardIcon.vue";
-import api from "@/js/http/api.js";
+import api, { getErrorMessage } from "@/js/http/api.js";
 
 const emit = defineEmits(['close', 'send', 'stop'])
 const isSpeaking = ref(false)
+const errorMessage = ref('')
 
 let vadInstance = null;
 
@@ -39,7 +39,7 @@ const startRecording = async () => {
     console.error("VAD 初始化失败:", e);
   }
 };
-// 将 Float32 转 PCM 16-bit
+
 const float32ToInt16 = (float32Array) => {
   const buffer = new Int16Array(float32Array.length);
   for (let i = 0; i < float32Array.length; i++) {
@@ -50,6 +50,7 @@ const float32ToInt16 = (float32Array) => {
 };
 
 const sendToBackend = async (arrayBuffer) => {
+  errorMessage.value = ''
   const blob = new Blob([arrayBuffer], { type: "audio/pcm" })
   const formData = new FormData()
   formData.append("audio", blob, 'voice.pcm')
@@ -58,10 +59,10 @@ const sendToBackend = async (arrayBuffer) => {
     const res = await api.post('/api/friend/message/asr/asr/', formData)
     const data = res.data
     if (data.result === 'success') {
-      emit('send', null, data.text) // 事件，第一个参数，第二个参数
+      emit('send', null, data.text)
     }
   } catch (err) {
-    console.error(err)
+    errorMessage.value = getErrorMessage(err, '操作过快了，请稍后再试')
   }
 };
 
@@ -89,6 +90,9 @@ onBeforeUnmount(() => {
   <div v-else class="text-white/50 text-base w-full text-center">
       语音输入
   </div>
+  <p v-if="errorMessage" class="absolute -top-10 left-0 w-full text-center text-xs text-red-300">
+    {{ errorMessage }}
+  </p>
   <div @click="emit('close')" class="absolute right-2 w-8 h-8 flex justify-center items-center cursor-pointer">
     <KeyboardIcon/>
   </div>

@@ -13,6 +13,7 @@ from rest_framework.renderers import BaseRenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 from web.models.friend import Friend, Message, SystemPrompt
 from web.views.friend.message.chat.graph import ChatGraph
@@ -48,6 +49,8 @@ def add_recent_messages(state, friend): #添加最近的对话
 
 class MessageChatView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'chat'
     renderer_classes = [SSERenderer]
     def post(self, request):
         friend_id = request.data['friend_id']

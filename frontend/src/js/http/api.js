@@ -9,6 +9,14 @@
 import axios from "axios"
 import { useUserStore } from "@/stores/user.js"
 
+export function getErrorMessage(error, fallback = '系统异常，请稍后重试') {
+  return error?.response?.data?.detail
+    || error?.response?.data?.result
+    || error?.userMessage
+    || error?.message
+    || fallback
+}
+
 const BASE_URL = 'http://127.0.0.1:8000'
 
 // 创建一个 axios 实例：后续都用这个 api 去发请求
@@ -67,6 +75,10 @@ api.interceptors.response.use(
 
     // 原始请求配置（用来重放请求）
     const originalRequest = error?.config
+    if (error?.response?.status === 429) {
+      error.userMessage = getErrorMessage(error, '操作过快了，请稍后再试')
+      return Promise.reject(error)
+    }
     if (!originalRequest) {
       return Promise.reject(error)
     }

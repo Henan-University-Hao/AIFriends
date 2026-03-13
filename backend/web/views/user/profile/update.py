@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # DRF 权限类：要求必须登录
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 
 from web.models.user import UserProfile
 from web.views.utils.photo import remove_old_photo
@@ -18,6 +19,8 @@ from web.views.utils.photo import remove_old_photo
 class UpdateProfileVIew(APIView):
     # 只有通过认证的用户才能访问该接口
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'write'
 
     def post(self, request):
         try:
