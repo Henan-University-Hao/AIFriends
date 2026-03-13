@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 
 from dotenv import load_dotenv
+import mimetypes
+
+mimetypes.add_type("application/javascript", ".mjs", True)
+mimetypes.add_type("application/wasm", ".wasm", True)
+mimetypes.add_type("model/onnx", ".onnx", True)  # 可选但建议
 
 load_dotenv()
 

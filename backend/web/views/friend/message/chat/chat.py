@@ -72,6 +72,7 @@ class MessageChatView(APIView):
 
         response = StreamingHttpResponse(self.event_stream(app, inputs, friend, message), content_type='text/event-stream') # 创建流式 HTTP 响应，指定 SSE 标准 MIME 类型
         response['Cache-Control'] = 'no-cache' #禁止浏览器/代理缓存该响应
+        response['X-Accel-Buffering'] = 'no' # 禁止nginx缓存
         return response
 
     async def tts_sender(self, app, inputs, message_queue, ws, task_id):
@@ -179,7 +180,7 @@ class MessageChatView(APIView):
                         "format": "mp3",        # 输出音频格式
                         "sample_rate": 22050,   # 采样率
                         "volume": 50,           # 音量
-                        "rate": 1.25,           # 语速
+                        "rate": 1.5,           # 语速
                         "pitch": 1              # 音调
                     },
                     "input": {
