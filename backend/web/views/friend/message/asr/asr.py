@@ -196,7 +196,7 @@ class ASRView(APIView):
                     "action": "run-task"     # 启动任务
                 },
                 "payload": {
-                    "model": "gummy-realtime-v1",   # 指定模型
+                    "model": os.getenv('ASR'),   # 指定模型
                     "parameters": {
                         "sample_rate": 16000,       # 音频采样率 16k
                         "format": "pcm",            # 音频格式为 PCM

@@ -176,7 +176,7 @@ class MessageChatView(APIView):
                     "task_group": "audio",
                     "task": "tts",
                     "function": "SpeechSynthesizer",
-                    "model": "cosyvoice-v3-flash",
+                    "model": os.getenv('TTS'),
                     "parameters": {
                         "text_type": "PlainText",
                         "voice": "longanyang",  # 音色
