@@ -159,7 +159,7 @@ class MessageChatView(APIView):
         task_id = uuid.uuid4().hex  # 为本次 TTS 会话生成唯一任务 ID
 
         api_key = os.getenv('API_KEY')
-        wss_url = os.getenv('wss_url')
+        wss_url = os.getenv('WSS_URL')
 
         headers = {'Authorization': f'Bearer {api_key}'}
 
