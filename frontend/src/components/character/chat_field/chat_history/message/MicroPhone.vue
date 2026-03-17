@@ -11,7 +11,7 @@ const errorMessage = ref('')
 let vadInstance = null;
 
 const startRecording = async () => {
-  const baseUrl = "/static/frontend/vad/";
+  const baseUrl = "http://localhost:5173/vad/";
   try {
     vadInstance = await MicVAD.new({
       baseAssetPath: baseUrl,
