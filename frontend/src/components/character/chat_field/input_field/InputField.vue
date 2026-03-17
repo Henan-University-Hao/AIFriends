@@ -12,6 +12,7 @@ const inputRef = useTemplateRef('input-ref')
 const message = ref('')
 const errorMessage = ref('')
 const showMic = ref(false)
+const isMuted = ref(false)
 let processId = 0
 
 let mediaSource = null;
@@ -104,6 +105,13 @@ function focus() {
   inputRef.value.focus()
 }
 
+function handleToggleMute() {
+  isMuted.value = !isMuted.value
+  if (isMuted.value) {
+    stopAudio()
+  }
+}
+
 async function handleSend(event, audioMessage) {
   errorMessage.value = ''
 
@@ -112,7 +120,11 @@ async function handleSend(event, audioMessage) {
     return
   }
 
-  initAudioStream()
+  if (isMuted.value) {
+    stopAudio()
+  } else {
+    initAudioStream()
+  }
 
   const curId = ++processId
   message.value = ''
@@ -125,6 +137,7 @@ async function handleSend(event, audioMessage) {
       body: {
         friend_id: props.friendId,
         message: content,
+        enable_tts: !isMuted.value,
       },
       onmessage(data) {
         if (curId !== processId) {
@@ -133,7 +146,7 @@ async function handleSend(event, audioMessage) {
         if (data.content) {
           emit('addToLastMessage', data.content)
         }
-        if (data.audio) {
+        if (data.audio && !isMuted.value) {
           handleAudioChunk(data.audio)
         }
       },
@@ -164,6 +177,21 @@ defineExpose({
 </script>
 
 <template>
+  <div
+      @click="handleToggleMute"
+      class="absolute top-2 right-11 z-10 h-8 w-8 cursor-pointer rounded-full bg-black/35 backdrop-blur-sm flex items-center justify-center text-white"
+      :title="isMuted ? '取消静音' : '静音'"
+  >
+    <svg v-if="!isMuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5 fill-current">
+      <path d="M14 3.23a1 1 0 0 0-1.66-.75L7.96 6.5H4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h3.96l4.38 4.02A1 1 0 0 0 14 20.77z"/>
+      <path d="M17.5 8.5a1 1 0 0 0-1.41 1.42 2.95 2.95 0 0 1 0 4.16 1 1 0 0 0 1.42 1.41 4.95 4.95 0 0 0-.01-6.99z"/>
+      <path d="M19.62 6.38a1 1 0 0 0-1.41 1.41 5.96 5.96 0 0 1 0 8.42 1 1 0 0 0 1.41 1.41 7.96 7.96 0 0 0 0-11.24z"/>
+    </svg>
+    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5 fill-current">
+      <path d="M14 3.23a1 1 0 0 0-1.66-.75L7.96 6.5H4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h3.96l4.38 4.02A1 1 0 0 0 14 20.77z"/>
+      <path d="M20.71 5.29a1 1 0 0 0-1.42 0L3.29 21.29a1 1 0 1 0 1.42 1.42l16-16a1 1 0 0 0 0-1.42z"/>
+    </svg>
+  </div>
   <p
       v-if="errorMessage"
       class="absolute bottom-18 left-2 w-86 rounded-xl bg-black/45 px-3 py-2 text-xs text-red-300 backdrop-blur-sm"

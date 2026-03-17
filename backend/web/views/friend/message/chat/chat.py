@@ -52,9 +52,19 @@ class MessageChatView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'chat'
     renderer_classes = [SSERenderer]
+
+    @staticmethod
+    def _to_bool(value, default=True):
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() not in ['0', 'false', 'no', 'off']
+
     def post(self, request):
         friend_id = request.data['friend_id']
         message = request.data['message'].strip()
+        enable_tts = self._to_bool(request.data.get('enable_tts'), True)
         if not message:
             return Response({
                 'result': '消息不能为空'
@@ -73,10 +83,19 @@ class MessageChatView(APIView):
         inputs = add_system_prompt(inputs, friend)
         inputs = add_recent_messages(inputs, friend)
 
-        response = StreamingHttpResponse(self.event_stream(app, inputs, friend, message), content_type='text/event-stream') # 创建流式 HTTP 响应，指定 SSE 标准 MIME 类型
+        response = StreamingHttpResponse(self.event_stream(app, inputs, friend, message, enable_tts), content_type='text/event-stream') # 创建流式 HTTP 响应，指定 SSE 标准 MIME 类型
         response['Cache-Control'] = 'no-cache' #禁止浏览器/代理缓存该响应
         response['X-Accel-Buffering'] = 'no' # 禁止nginx缓存
         return response
+
+    async def text_sender(self, app, inputs, message_queue):
+        async for msg, metadata in app.astream(inputs, stream_mode="messages"):
+            if isinstance(msg, BaseMessageChunk):
+                if msg.content:
+                    message_queue.put_nowait({'content': msg.content})
+
+                if hasattr(msg, 'usage_metadata') and msg.usage_metadata:
+                    message_queue.put_nowait({'usage': msg.usage_metadata})
 
     async def tts_sender(self, app, inputs, message_queue, ws, task_id):
         """
@@ -223,8 +242,14 @@ class MessageChatView(APIView):
         finally:
             messaage_queue.put_nowait(None)
 
+    def work_text(self, app, inputs, message_queue):
+        try:
+            asyncio.run(self.text_sender(app, inputs, message_queue))
+        finally:
+            message_queue.put_nowait(None)
+
     # 模型回复改为流式的回复
-    def event_stream(self, app, inputs, friend, message):
+    def event_stream(self, app, inputs, friend, message, enable_tts=True):
         """
                 SSE 数据生成器：
                 1. 创建消息队列
@@ -236,7 +261,10 @@ class MessageChatView(APIView):
         message_queue = Queue() # 消息队列
 
         # 后台线程启动异步TTS总任务
-        thread = threading.Thread(target=self.work, args=(app, inputs,message_queue))
+        if enable_tts:
+            thread = threading.Thread(target=self.work, args=(app, inputs, message_queue))
+        else:
+            thread = threading.Thread(target=self.work_text, args=(app, inputs, message_queue))
         thread.start()
 
         full_usage = {}
