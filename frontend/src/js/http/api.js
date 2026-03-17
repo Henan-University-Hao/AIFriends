@@ -8,6 +8,7 @@
 
 import axios from "axios"
 import { useUserStore } from "@/stores/user.js"
+import CONFIG_API from "@/js/config/config.js";
 
 export function getErrorMessage(error, fallback = '系统异常，请稍后重试') {
   return error?.response?.data?.detail
@@ -17,7 +18,7 @@ export function getErrorMessage(error, fallback = '系统异常，请稍后重�
     || fallback
 }
 
-const BASE_URL = 'http://127.0.0.1:8000'
+const BASE_URL = CONFIG_API.HTTP_URL
 
 // 创建一个 axios 实例：后续都用这个 api 去发请求
 const api = axios.create({

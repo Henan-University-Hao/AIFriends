@@ -202,7 +202,7 @@ class MessageChatView(APIView):
                         "format": "mp3",        # 输出音频格式
                         "sample_rate": 22050,   # 采样率
                         "volume": 50,           # 音量
-                        "rate": 1.5,           # 语速
+                        "rate": 1.25,           # 语速
                         "pitch": 1              # 音调
                     },
                     "input": {
