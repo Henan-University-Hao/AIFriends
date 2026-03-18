@@ -167,7 +167,7 @@ class MessageChatView(APIView):
                 if event in ['task-finished', 'task-failed']:
                     break
 
-    async def run_tts_tasks(self, app, inputs, message_queue):
+    async def run_tts_tasks(self, app, inputs, message_queue, voice_id):
         """
         整个 TTS 异步总控函数：
         1. 建立到 TTS 平台的 WebSocket 连接
@@ -198,7 +198,7 @@ class MessageChatView(APIView):
                     "model": os.getenv('TTS'),
                     "parameters": {
                         "text_type": "PlainText",
-                        "voice": "longanyang",  # 音色
+                        "voice": voice_id,  # 音色
                         "format": "mp3",        # 输出音频格式
                         "sample_rate": 22050,   # 采样率
                         "volume": 50,           # 音量
@@ -228,7 +228,7 @@ class MessageChatView(APIView):
             )
 
 
-    def work(self, app, inputs, messaage_queue):
+    def work(self, app, inputs, messaage_queue, voice_id):
         """
                线程入口函数：
                在子线程中创建并运行 asyncio 事件循环，
@@ -238,7 +238,7 @@ class MessageChatView(APIView):
                作为“整个流式任务结束”的信号。
         """
         try:
-            asyncio.run(self.run_tts_tasks(app, inputs, messaage_queue))
+            asyncio.run(self.run_tts_tasks(app, inputs, messaage_queue, voice_id))
         finally:
             messaage_queue.put_nowait(None)
 
@@ -262,7 +262,7 @@ class MessageChatView(APIView):
 
         # 后台线程启动异步TTS总任务
         if enable_tts:
-            thread = threading.Thread(target=self.work, args=(app, inputs, message_queue))
+            thread = threading.Thread(target=self.work, args=(app, inputs, message_queue, friend.character.voice.voice_id))
         else:
             thread = threading.Thread(target=self.work_text, args=(app, inputs, message_queue))
         thread.start()
