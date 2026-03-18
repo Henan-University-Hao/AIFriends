@@ -13,7 +13,7 @@ def create_voice(voice_url, prefix):
         "model": "voice-enrollment",
         "input": {
             "action": "create_voice",
-            "target_model": "cosyvoice-v3-plus",
+            "target_model": os.getenv('TTS'),
             "prefix": prefix,
             "url": voice_url,
             "language_hints": ["zh"]
